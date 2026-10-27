@@ -23,7 +23,7 @@ and rewrote that piece as a ~200-line Python script with no dependencies.
 | File | What it does |
 |---|---|
 | `push_listener.py` | Answers the panel's **Scan → Computer** like Event Manager does, and when Start is pressed tells **Epson ScanSmart** to scan. You get ScanSmart's preview and can save as PDF, JPEG, etc. |
-| `install.sh` / `uninstall.sh` | Run `push_listener.py` at login as a LaunchAgent (and optionally delete the dead Intel Event Manager). |
+| `install.sh` / `uninstall.sh` | Run `push_listener.py` at login as a LaunchAgent (and optionally stop the dead Intel Event Manager from launching). |
 | `scan_listener.py` | Alternative without any Epson software: registers the Mac under **Scan → Computer (WSD)** and saves JPEGs straight into a folder. |
 | [`docs/protocol.md`](docs/protocol.md) | The protocol, byte by byte. |
 | [`docs/capturing.md`](docs/capturing.md) | How the traffic was captured on Windows, and how to check another printer model. |
@@ -58,6 +58,9 @@ Every Mac runs its own listener and answers for itself, so the panel lists all o
 
 - macOS on Apple silicon or Intel. Python 3.9 or newer: the Xcode Command Line Tools one
   (`xcode-select --install`) or Homebrew's. No packages to install.
+- **Do not delete Epson Event Manager.** It cannot run, but ScanSmart checks that
+  `/Applications/Epson Software/Event Manager.app` exists and otherwise refuses panel scans with
+  "required files not found. Make sure Epson Scan 2 and Epson Event Manager are installed".
 - **Epson ScanSmart** installed, and able to scan from the printer over the network at least once
   (that is also how the listener learns the scanner's name).
 - The Mac and the printer on the same subnet, with multicast passing between them (normal for home routers).
@@ -76,8 +79,8 @@ login (restarting it if it dies), and logs to `~/Library/Logs/epson-pushscan.log
 
 Options:
 
-- `--remove-event-manager`: also delete Epson Event Manager and Epson Scanner Monitor (asks for an administrator
-  password). ScanSmart, Epson Scan 2, the printer driver and Epson Software Updater are not touched.
+- `--disable-event-manager`: remove the launch agents of Epson Event Manager and Epson Scanner Monitor so macOS
+  stops trying to start them (asks for an administrator password). The apps themselves are kept.
 - `--scanner "EPSON L6270 Series"`: the scanner name as ScanSmart shows it, if you have more than one Epson
   scanner. By default the listener uses the one ScanSmart used last.
 
@@ -113,8 +116,9 @@ run it yourself or write your own LaunchAgent for it.
 |---|---|
 | Panel says no computer found | `tail -f ~/Library/Logs/epson-pushscan.log`: choosing Scan → Computer should log `Panel is looking for computers`. If nothing is logged, the query is not reaching the Mac: different subnet / VLAN, guest network, or multicast filtered by the router. Make sure you chose **Computer**, not **Computer (WSD)**. |
 | Mac listed, but nothing happens on Start | The log should show `Start pressed on the panel`. Then make sure ScanSmart can scan from the printer by itself, and that "python3 may control Epson ScanSmart" was allowed (System Settings → Privacy & Security → Automation). For ScanSmart's own log, create a folder named `_ScanManagerLog` on the Desktop, try again, read the log inside, then delete the folder. |
+| ScanSmart opens but says required files are not found (Epson Scan 2 / Epson Event Manager) | `/Applications/Epson Software/Event Manager.app` is missing. Reinstall Epson Event Manager from Epson's website; it does not need to be able to run. |
 | `Could not find the scanner name` in the log | Open ScanSmart and scan once, or reinstall with `--scanner "<name as ScanSmart shows it>"`. |
-| `Address already in use` | Something else holds port 2968, e.g. Event Manager running under Rosetta. Quit it or reinstall with `--remove-event-manager`. |
+| `Address already in use` | Something else holds port 2968, e.g. Event Manager running under Rosetta. Quit it or reinstall with `--disable-event-manager`. |
 
 ## Tested with
 

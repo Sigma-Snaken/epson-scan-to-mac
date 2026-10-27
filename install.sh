@@ -1,21 +1,22 @@
 #!/bin/bash
 # Install push_listener.py on this Mac (panel "Scan -> Computer" -> Epson ScanSmart) and start it at login.
-# Optionally remove Epson Event Manager / Scanner Monitor, which are Intel-only and cannot run on
-# Apple silicon without Rosetta.
+# Optionally stop Epson Event Manager / Scanner Monitor from launching (they are Intel-only and cannot run
+# on Apple silicon without Rosetta). Event Manager.app itself is kept: ScanSmart refuses panel scans
+# ("required files not found") when /Applications/Epson Software/Event Manager.app is missing.
 #
-# Usage: bash install.sh [--remove-event-manager] [--scanner "EPSON L6270 Series"] [name shown on the panel]
+# Usage: bash install.sh [--disable-event-manager] [--scanner "EPSON L6270 Series"] [name shown on the panel]
 set -euo pipefail
 
 usage() {
-    echo "Usage: bash install.sh [--remove-event-manager] [--scanner \"EPSON L6270 Series\"] [panel name]"
+    echo "Usage: bash install.sh [--disable-event-manager] [--scanner \"EPSON L6270 Series\"] [panel name]"
 }
 
-REMOVE_EM=0
+DISABLE_EM=0
 SCANNER=""
 NAME=""
 while [ $# -gt 0 ]; do
     case "$1" in
-        --remove-event-manager) REMOVE_EM=1 ;;
+        --disable-event-manager) DISABLE_EM=1 ;;
         --scanner) SCANNER="${2:?--scanner needs a value}"; shift ;;
         -h|--help) usage; exit 0 ;;
         -*) usage >&2; exit 1 ;;
@@ -95,21 +96,25 @@ launchctl bootout "gui/$UID_NUM/$LABEL" 2>/dev/null || true
 launchctl bootstrap "gui/$UID_NUM" "$PLIST"
 echo "Installed: the panel will list \"${NAME}\". Log: ${LOG}"
 
-# Epson Event Manager / Scanner Monitor (Intel-only, system locations, needs an administrator password)
+# Epson Event Manager / Scanner Monitor (Intel-only). Their launch agents live in system locations, so
+# disabling them needs an administrator password. The apps themselves stay: ScanSmart checks for Event Manager.app.
 EM_APP="/Applications/Epson Software/Event Manager.app"
-SM_DIR="/Library/Application Support/EPSON/Scanner/ScannerMonitor"
 EM_PLIST="/Library/LaunchAgents/com.epson.eventmanager.agent.plist"
 SM_PLIST="/Library/LaunchAgents/com.epson.scannermonitor.plist"
-if [ -e "$EM_APP" ] || [ -e "$SM_DIR" ] || [ -e "$EM_PLIST" ] || [ -e "$SM_PLIST" ]; then
-    if [ "$REMOVE_EM" = 1 ]; then
-        echo "Removing Epson Event Manager / Scanner Monitor; macOS will ask for an administrator password:"
+if [ ! -e "$EM_APP" ]; then
+    echo "Warning: $EM_APP is missing. ScanSmart shows \"required files not found\" and will not scan"
+    echo "from the panel without it. Reinstall Epson Event Manager from Epson's website, then run this script again."
+fi
+if [ -e "$EM_PLIST" ] || [ -e "$SM_PLIST" ]; then
+    if [ "$DISABLE_EM" = 1 ]; then
+        echo "Disabling Epson Event Manager / Scanner Monitor launch agents; macOS will ask for an administrator password:"
         launchctl bootout "gui/$UID_NUM/com.epson.eventmanager.agent" 2>/dev/null || true
         launchctl bootout "gui/$UID_NUM/com.epson.scannermonitor" 2>/dev/null || true
-        CMD="rm -rf '$EM_APP' '$SM_DIR' '$EM_PLIST' '$SM_PLIST'; pkgutil --forget com.epson.pkg.eventmanager; pkgutil --forget com.epson.pkg.scannermonitor; true"
+        CMD="rm -f '$EM_PLIST' '$SM_PLIST'"
         osascript -e "do shell script \"$CMD\" with administrator privileges" >/dev/null
-        echo "Removed."
+        echo "Disabled."
     else
-        echo "Note: Epson Event Manager is still installed. Without Rosetta it cannot start and does no harm;"
-        echo "if it does run, it competes for port 2968. Run again with --remove-event-manager to delete it."
+        echo "Note: Epson Event Manager's launch agent is still installed. Without Rosetta it cannot start and does no"
+        echo "harm; if it does run, it competes for port 2968. Run again with --disable-event-manager to turn it off."
     fi
 fi

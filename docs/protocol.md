@@ -145,6 +145,10 @@ end tell
   `~/Library/Preferences/com.epson.scan.Epson-ScanSmart.plist` → `previousScanner.displayName`, which is where
   `push_listener.py` reads its default from. The Epson Scan 2 model bundle lists the same string under
   `ESTWAINIDForUpdate`.
+- **Event Manager.app must exist.** ScanSmart checks for `/Applications/Epson Software/Event Manager.app`
+  (the path is in its binary next to `EpsonScan2.framework`). After `notify` it logs the `kind = invokejob …`
+  line, then shows "required files not found … Epson Scan 2 / Epson Event Manager" instead of scanning if the
+  app was deleted. It is only checked, never launched, so the Intel-only app is fine.
 - **Debug log:** create a folder named `_ScanManagerLog` on the Desktop and ScanSmart writes its log there.
   Delete the folder afterwards.
 - The first time, macOS asks whether `python3` (or `osascript`) may control Epson ScanSmart. Allow it.
