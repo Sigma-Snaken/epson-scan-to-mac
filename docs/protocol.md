@@ -36,7 +36,7 @@ sequenceDiagram
     L-->>P: HTTP/1.0 200 OK, StatusOut=OK
     L->>S: AppleScript: notify kind "invokejob" scanner … ipaddress … jobinfo …
     S->>P: ESC/I over TCP 1865: scan
-    Note over S: ScanSmart opens its preview window;<br/>save as PDF / JPEG / … from there
+    Note over S: ScanSmart opens its preview window,<br/>save as PDF / JPEG / … from there
 ```
 
 **No registration is needed beforehand.** The printer asks the network each time "Computer" is chosen on
