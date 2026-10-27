@@ -148,7 +148,8 @@ end tell
 - **Event Manager.app must exist.** ScanSmart checks for `/Applications/Epson Software/Event Manager.app`
   (the path is in its binary next to `EpsonScan2.framework`). After `notify` it logs the `kind = invokejob …`
   line, then shows "required files not found … Epson Scan 2 / Epson Event Manager" instead of scanning if the
-  app was deleted. It is only checked, never launched, so the Intel-only app is fine.
+  app was deleted. It is only checked for existence, never launched: an **empty folder** with that name is enough
+  (tested 2026-10-27: after `mkdir`, the next panel scan went `startPushScan` → `scanAndEdit start`).
 - **Debug log:** create a folder named `_ScanManagerLog` on the Desktop and ScanSmart writes its log there.
   Delete the folder afterwards.
 - The first time, macOS asks whether `python3` (or `osascript`) may control Epson ScanSmart. Allow it.
