@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+.wsd-log/
+*.pcap
+*.pcapng
+*.etl
+docs/plans/
+.DS_Store
