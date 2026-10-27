@@ -1,8 +1,8 @@
 #!/bin/bash
 # Install push_listener.py on this Mac (panel "Scan -> Computer" -> Epson ScanSmart) and start it at login.
 # Optionally stop Epson Event Manager / Scanner Monitor from launching (they are Intel-only and cannot run
-# on Apple silicon without Rosetta). Event Manager.app itself is kept: ScanSmart refuses panel scans
-# ("required files not found") when /Applications/Epson Software/Event Manager.app is missing.
+# on Apple silicon without Rosetta). ScanSmart refuses panel scans ("required files not found") unless
+# /Applications/Epson Software/Event Manager.app exists, so an empty placeholder is created if it is missing.
 #
 # Usage: bash install.sh [--disable-event-manager] [--scanner "EPSON L6270 Series"] [name shown on the panel]
 set -euo pipefail
@@ -97,13 +97,15 @@ launchctl bootstrap "gui/$UID_NUM" "$PLIST"
 echo "Installed: the panel will list \"${NAME}\". Log: ${LOG}"
 
 # Epson Event Manager / Scanner Monitor (Intel-only). Their launch agents live in system locations, so
-# disabling them needs an administrator password. The apps themselves stay: ScanSmart checks for Event Manager.app.
+# changing them needs an administrator password. ScanSmart only checks that Event Manager.app exists.
 EM_APP="/Applications/Epson Software/Event Manager.app"
 EM_PLIST="/Library/LaunchAgents/com.epson.eventmanager.agent.plist"
 SM_PLIST="/Library/LaunchAgents/com.epson.scannermonitor.plist"
 if [ ! -e "$EM_APP" ]; then
-    echo "Warning: $EM_APP is missing. ScanSmart shows \"required files not found\" and will not scan"
-    echo "from the panel without it. Reinstall Epson Event Manager from Epson's website, then run this script again."
+    echo "Creating an empty $EM_APP (ScanSmart will not scan from the panel without it);"
+    echo "macOS will ask for an administrator password:"
+    osascript -e "do shell script \"mkdir -p '$EM_APP'\" with administrator privileges" >/dev/null \
+        || echo "Could not create it. Create it manually: sudo mkdir \"$EM_APP\"" >&2
 fi
 if [ -e "$EM_PLIST" ] || [ -e "$SM_PLIST" ]; then
     if [ "$DISABLE_EM" = 1 ]; then

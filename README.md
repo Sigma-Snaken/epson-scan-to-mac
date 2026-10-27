@@ -58,9 +58,10 @@ Every Mac runs its own listener and answers for itself, so the panel lists all o
 
 - macOS on Apple silicon or Intel. Python 3.9 or newer: the Xcode Command Line Tools one
   (`xcode-select --install`) or Homebrew's. No packages to install.
-- **Do not delete Epson Event Manager.** It cannot run, but ScanSmart checks that
+- Epson Event Manager itself is **not** needed, but ScanSmart checks that
   `/Applications/Epson Software/Event Manager.app` exists and otherwise refuses panel scans with
-  "required files not found. Make sure Epson Scan 2 and Epson Event Manager are installed".
+  "required files not found. Make sure Epson Scan 2 and Epson Event Manager are installed". If it is missing,
+  `install.sh` creates an empty folder with that name (asks for an administrator password). Don't delete it.
 - **Epson ScanSmart** installed, and able to scan from the printer over the network at least once
   (that is also how the listener learns the scanner's name).
 - The Mac and the printer on the same subnet, with multicast passing between them (normal for home routers).
@@ -116,7 +117,7 @@ run it yourself or write your own LaunchAgent for it.
 |---|---|
 | Panel says no computer found | `tail -f ~/Library/Logs/epson-pushscan.log`: choosing Scan → Computer should log `Panel is looking for computers`. If nothing is logged, the query is not reaching the Mac: different subnet / VLAN, guest network, or multicast filtered by the router. Make sure you chose **Computer**, not **Computer (WSD)**. |
 | Mac listed, but nothing happens on Start | The log should show `Start pressed on the panel`. Then make sure ScanSmart can scan from the printer by itself, and that "python3 may control Epson ScanSmart" was allowed (System Settings → Privacy & Security → Automation). For ScanSmart's own log, create a folder named `_ScanManagerLog` on the Desktop, try again, read the log inside, then delete the folder. |
-| ScanSmart opens but says required files are not found (Epson Scan 2 / Epson Event Manager) | `/Applications/Epson Software/Event Manager.app` is missing. Reinstall Epson Event Manager from Epson's website; it does not need to be able to run. |
+| ScanSmart opens but says required files are not found (Epson Scan 2 / Epson Event Manager) | `/Applications/Epson Software/Event Manager.app` is missing. Run `bash install.sh` again (it creates an empty placeholder), or `sudo mkdir "/Applications/Epson Software/Event Manager.app"`. |
 | `Could not find the scanner name` in the log | Open ScanSmart and scan once, or reinstall with `--scanner "<name as ScanSmart shows it>"`. |
 | `Address already in use` | Something else holds port 2968, e.g. Event Manager running under Rosetta. Quit it or reinstall with `--disable-event-manager`. |
 

@@ -56,9 +56,9 @@ flowchart LR
 
 - macOS（Apple 晶片或 Intel 皆可）。Python 3.9 以上：Xcode 命令列工具內建的（`xcode-select --install`）
   或 Homebrew 的都可以，不需要安裝任何套件。
-- **不要刪除 Epson Event Manager**。它雖然跑不起來，但 ScanSmart 會檢查
-  `/Applications/Epson Software/Event Manager.app` 是否存在，不存在就拒絕面板掃描，並跳出「找不到所需的檔案。
-  請確定已安裝以下軟體：Epson Scan 2、Epson Event Manager」。
+- 不需要 Epson Event Manager 本身，但 ScanSmart 會檢查 `/Applications/Epson Software/Event Manager.app`
+  是否存在，不存在就拒絕面板掃描，並跳出「找不到所需的檔案。請確定已安裝以下軟體：Epson Scan 2、Epson Event Manager」。
+  缺少時 `install.sh` 會建一個同名的空資料夾騙過它（會要求輸入管理者密碼），請不要刪掉。
 - 已安裝 **Epson ScanSmart**，且至少用它透過網路掃過一次這台印表機（程式也是從這裡得知掃描器名稱）。
 - Mac 和印表機在同一個網段，且兩者之間可以收送多點傳送封包（一般家用路由器都可以）。
 
@@ -111,7 +111,7 @@ python3 scan_listener.py --printer 192.168.1.20 --out ~/Documents/Scans
 |---|---|
 | 面板顯示找不到電腦 | `tail -f ~/Library/Logs/epson-pushscan.log`：在面板選「掃描 → 電腦」時應該出現 `Panel is looking for computers`。沒有的話，代表詢問沒傳到 Mac：不同網段／VLAN、訪客網路，或路由器擋了多點傳送。也請確認選的是「電腦」而不是「電腦（WSD）」。 |
 | 有列出 Mac，但按開始沒反應 | 紀錄裡應該要有 `Start pressed on the panel`。接著確認 ScanSmart 自己能掃這台印表機，以及「python3 控制 Epson ScanSmart」已允許（系統設定 → 隱私權與安全性 → 自動化）。要看 ScanSmart 自己的紀錄：在桌面建一個叫 `_ScanManagerLog` 的資料夾，再試一次，看裡面的紀錄，看完把資料夾刪掉。 |
-| ScanSmart 有開，但跳出「找不到所需的檔案」（Epson Scan 2／Epson Event Manager） | `/Applications/Epson Software/Event Manager.app` 不見了。到 Epson 官網重新安裝 Epson Event Manager 即可，它不需要能執行。 |
+| ScanSmart 有開，但跳出「找不到所需的檔案」（Epson Scan 2／Epson Event Manager） | `/Applications/Epson Software/Event Manager.app` 不見了。重跑一次 `bash install.sh`（會建空的佔位資料夾），或執行 `sudo mkdir "/Applications/Epson Software/Event Manager.app"`。 |
 | 紀錄出現 `Could not find the scanner name` | 打開 ScanSmart 掃一次，或用 `--scanner "<ScanSmart 顯示的名稱>"` 重新安裝。 |
 | `Address already in use` | 有別的程式佔用 2968 埠，例如透過 Rosetta 執行的 Event Manager。把它關掉，或加 `--disable-event-manager` 重新安裝。 |
 
