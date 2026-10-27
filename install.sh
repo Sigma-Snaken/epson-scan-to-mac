@@ -104,7 +104,8 @@ SM_PLIST="/Library/LaunchAgents/com.epson.scannermonitor.plist"
 if [ ! -e "$EM_APP" ]; then
     echo "Creating an empty $EM_APP (ScanSmart will not scan from the panel without it);"
     echo "macOS will ask for an administrator password:"
-    osascript -e "do shell script \"mkdir -p '$EM_APP'\" with administrator privileges" >/dev/null
+    osascript -e "do shell script \"mkdir -p '$EM_APP'\" with administrator privileges" >/dev/null \
+        || echo "Could not create it. Create it manually: sudo mkdir \"$EM_APP\"" >&2
 fi
 if [ -e "$EM_PLIST" ] || [ -e "$SM_PLIST" ]; then
     if [ "$DISABLE_EM" = 1 ]; then
